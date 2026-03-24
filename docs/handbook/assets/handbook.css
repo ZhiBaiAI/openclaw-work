@@ -1,0 +1,289 @@
+:root {
+  --ink-strong: #1d1f22;
+  --ink-body: #36383c;
+  --ink-soft: #76777a;
+  --paper: #f5f0e7;
+  --paper-strong: #ebe2d5;
+  --brand: #8f3b2e;
+  --brand-deep: #5f241b;
+  --line: rgba(29, 31, 34, 0.14);
+  --line-strong: rgba(29, 31, 34, 0.26);
+  --shadow: rgba(35, 26, 18, 0.12);
+  --font-sans: "Source Han Sans SC", "Noto Sans CJK SC", "PingFang SC",
+    "Microsoft YaHei UI", sans-serif;
+  --font-serif: "Source Han Serif SC", "Noto Serif CJK SC", "Songti SC", "SimSun",
+    serif;
+  --page-width: 210mm;
+  --page-margin-top: 18mm;
+  --page-margin-side: 18mm;
+  --page-margin-bottom: 22mm;
+}
+
+@page {
+  size: A4;
+  margin: var(--page-margin-top) var(--page-margin-side) var(--page-margin-bottom);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  color: var(--ink-body);
+  background:
+    radial-gradient(circle at top left, rgba(143, 59, 46, 0.05), transparent 28%),
+    linear-gradient(180deg, #f1ebe1 0%, #faf7f2 20%, #f6f1e8 100%);
+  font-family: var(--font-serif);
+  font-size: 12pt;
+  line-height: 1.72;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+}
+
+.book-shell {
+  width: min(calc(var(--page-width) + 28mm), 100%);
+  margin: 0 auto;
+  padding: 20mm 0 24mm;
+}
+
+.page-card {
+  width: var(--page-width);
+  min-height: calc(297mm - 16mm);
+  margin: 0 auto 14mm;
+  padding: 0;
+  background: rgba(255, 255, 255, 0.84);
+  box-shadow: 0 18px 55px var(--shadow);
+}
+
+.book {
+  position: relative;
+}
+
+.cover {
+  position: relative;
+  min-height: calc(297mm - (var(--page-margin-top) + var(--page-margin-bottom)));
+  padding: 0;
+  background: transparent;
+  overflow: hidden;
+  page-break-after: always;
+}
+
+.cover::before,
+.cover::after {
+  content: none;
+}
+
+.cover__image {
+  display: block;
+  width: 100%;
+  height: calc(297mm - (var(--page-margin-top) + var(--page-margin-bottom)));
+  object-fit: cover;
+  object-position: center top;
+}
+
+.chapter {
+  page-break-before: always;
+}
+
+.chapter--toc {
+  page-break-before: auto;
+}
+
+.chapter__heading {
+  position: relative;
+  margin: 0 0 10mm;
+  padding-bottom: 5mm;
+  border-bottom: 1px solid var(--line-strong);
+}
+
+.chapter__heading h1 {
+  max-width: 152mm;
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: 22pt;
+  font-weight: 700;
+  line-height: 1.32;
+  color: var(--ink-strong);
+}
+
+.chapter__body > :first-child {
+  margin-top: 0;
+}
+
+.chapter--toc .chapter__heading {
+  margin-bottom: 12mm;
+  padding-bottom: 8mm;
+  text-align: center;
+  border-bottom: 1.5px solid var(--brand);
+}
+
+.chapter--toc .chapter__heading h1 {
+  display: inline-block;
+  padding: 0 10mm;
+  letter-spacing: 0.18em;
+}
+
+h3,
+h4,
+h5 {
+  break-after: avoid-page;
+}
+
+h3 {
+  margin: 0 0 6mm;
+  font-family: var(--font-serif);
+  font-size: 18pt;
+  line-height: 1.38;
+  color: var(--ink-strong);
+}
+
+h4 {
+  margin: 10mm 0 4mm;
+  font-family: var(--font-sans);
+  font-size: 13pt;
+  line-height: 1.4;
+  color: var(--ink-strong);
+}
+
+h5 {
+  margin: 7mm 0 3mm;
+  font-family: var(--font-sans);
+  font-size: 11.2pt;
+  color: var(--ink-strong);
+}
+
+p {
+  margin: 0 0 4.2mm;
+  text-align: justify;
+  text-justify: inter-ideograph;
+  orphans: 3;
+  widows: 3;
+}
+
+strong {
+  color: var(--ink-strong);
+}
+
+em {
+  color: var(--brand-deep);
+}
+
+ul,
+ol {
+  margin: 0 0 5mm;
+  padding-left: 6mm;
+}
+
+li {
+  margin: 0 0 2.4mm;
+  padding-left: 1.8mm;
+}
+
+li::marker {
+  color: var(--brand);
+}
+
+blockquote {
+  margin: 7mm 0;
+  padding: 5mm 6mm 5mm 7mm;
+  border-left: 2px solid var(--brand);
+  background:
+    linear-gradient(90deg, rgba(143, 59, 46, 0.06), transparent 65%),
+    rgba(247, 242, 232, 0.7);
+  color: var(--ink-body);
+}
+
+blockquote p:last-child {
+  margin-bottom: 0;
+}
+
+hr {
+  height: 1px;
+  margin: 10mm 0 8mm;
+  border: 0;
+  background: linear-gradient(90deg, var(--line-strong), transparent);
+}
+
+code {
+  padding: 0.2em 0.42em;
+  border-radius: 4px;
+  background: rgba(22, 33, 43, 0.08);
+  font-family: "Cascadia Mono", "Consolas", monospace;
+  font-size: 0.9em;
+}
+
+pre {
+  padding: 5mm;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  background: rgba(248, 244, 235, 0.7);
+}
+
+pre code {
+  padding: 0;
+  background: transparent;
+}
+
+.toc-prose h3:first-child {
+  margin-top: 0;
+}
+
+.toc-prose h4 {
+  margin-top: 8mm;
+  padding-bottom: 2.5mm;
+  border-bottom: 1px solid var(--line);
+  font-size: 12.5pt;
+}
+
+.toc-prose ul,
+.toc-prose ol {
+  margin-bottom: 4mm;
+}
+
+.toc-prose .chapter__body,
+.toc-prose {
+  font-size: 11.2pt;
+  line-height: 1.75;
+}
+
+.toc-prose li {
+  margin-bottom: 2.2mm;
+}
+
+.toc-prose blockquote {
+  margin: 4mm 0 5mm;
+  padding-top: 3.5mm;
+  padding-bottom: 3.5mm;
+  font-size: 10.6pt;
+  color: var(--ink-soft);
+}
+
+@media screen {
+  body {
+    padding: 0 0 24mm;
+  }
+}
+
+@media print {
+  html,
+  body {
+    background: #fff;
+  }
+
+  .book-shell {
+    width: auto;
+    margin: 0;
+    padding: 0;
+  }
+
+  .page-card {
+    width: auto;
+    min-height: auto;
+    margin: 0;
+    box-shadow: none;
+    background: transparent;
+  }
+}
