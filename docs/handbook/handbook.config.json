@@ -9,6 +9,10 @@
   },
   "sections": [
     {
+      "id": "chapter-08",
+      "file": "./chapters/08-作者介绍.md"
+    },
+    {
       "id": "toc",
       "type": "toc",
       "file": "./chapters/00-目录.md"
