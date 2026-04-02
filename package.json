@@ -5,10 +5,13 @@
   "type": "module",
   "scripts": {
     "build:handbook": "node scripts/render-handbook.mjs",
+    "build:handbook:all": "node scripts/render-handbook.mjs --all",
     "build:handbook:html": "node scripts/render-handbook.mjs --html-only",
     "build:handbook:pdf": "node scripts/render-handbook.mjs --pdf-only",
+    "handbook:list": "node scripts/render-handbook.mjs --list",
     "pdf:to-md": "python scripts/pdf_to_md.py",
     "handbook": "npm run build:handbook",
+    "handbook:all": "npm run build:handbook:all",
     "handbook:html": "npm run build:handbook:html",
     "handbook:pdf": "npm run build:handbook:pdf"
   },

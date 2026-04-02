@@ -8,8 +8,7 @@ import { chromium } from "playwright-core";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const projectRoot = path.resolve(__dirname, "..");
-const handbookDir = path.join(projectRoot, "docs", "handbook");
-const handbookConfigPath = path.join(handbookDir, "handbook.config.json");
+const handbooksRoot = path.join(projectRoot, "docs", "handbooks");
 
 const browserCandidates = [
   process.env.BROWSER_PATH,
@@ -18,10 +17,6 @@ const browserCandidates = [
   "C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe",
   "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe"
 ].filter(Boolean);
-
-const args = new Set(process.argv.slice(2));
-const htmlOnly = args.has("--html-only");
-const pdfOnly = args.has("--pdf-only");
 
 marked.setOptions({
   gfm: true,
@@ -73,28 +68,164 @@ function normalizeInlineStrong(markdown) {
   return String(markdown || "").replace(/\*\*([^*\n]+)\*\*/g, "<strong>$1</strong>");
 }
 
-async function readHandbookConfig() {
-  const configDir = path.dirname(handbookConfigPath);
-  const config = JSON.parse(await fs.readFile(handbookConfigPath, "utf8"));
+function readNpmConfigValue(name) {
+  const value = process.env[`npm_config_${name}`];
+  return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
+function readNpmBooleanConfig(name) {
+  const value = readNpmConfigValue(name);
+  return value === "true" || value === "1";
+}
+
+function parseArgs(argv) {
+  const npmConfiguredHandbook = readNpmConfigValue("handbook");
+  const options = {
+    buildAll: readNpmBooleanConfig("all"),
+    handbookSlug:
+      npmConfiguredHandbook && npmConfiguredHandbook !== "true" ? npmConfiguredHandbook : null,
+    help: false,
+    htmlOnly: false,
+    listOnly: false,
+    pdfOnly: false
+  };
+
+  for (let index = 0; index < argv.length; index += 1) {
+    const arg = argv[index];
+
+    switch (arg) {
+      case "--all":
+        options.buildAll = true;
+        break;
+      case "--handbook": {
+        const slug = argv[index + 1];
+
+        if (!slug || slug.startsWith("--")) {
+          throw new Error("The --handbook option requires a handbook slug.");
+        }
+
+        options.handbookSlug = slug.trim();
+        index += 1;
+        break;
+      }
+      case "--help":
+      case "-h":
+        options.help = true;
+        break;
+      case "--html-only":
+        options.htmlOnly = true;
+        break;
+      case "--list":
+        options.listOnly = true;
+        break;
+      case "--pdf-only":
+        options.pdfOnly = true;
+        break;
+      default:
+        if (arg.startsWith("--handbook=")) {
+          options.handbookSlug = arg.slice("--handbook=".length).trim();
+          break;
+        }
+
+        if (!arg.startsWith("--") && !options.handbookSlug) {
+          options.handbookSlug = arg.trim();
+          break;
+        }
+
+        if (options.handbookSlug && arg === options.handbookSlug) {
+          break;
+        }
+
+        throw new Error(`Unknown argument: ${arg}`);
+    }
+  }
+
+  if (options.htmlOnly && options.pdfOnly) {
+    throw new Error("Use only one of --html-only or --pdf-only.");
+  }
+
+  if (options.buildAll && options.handbookSlug) {
+    throw new Error("Use either --all or --handbook <slug>, not both.");
+  }
+
+  return options;
+}
+
+async function discoverHandbooks() {
+  let entries = [];
+
+  try {
+    entries = await fs.readdir(handbooksRoot, { withFileTypes: true });
+  } catch (error) {
+    if (error && error.code === "ENOENT") {
+      throw new Error(`Handbooks root not found: ${handbooksRoot}`);
+    }
+
+    throw error;
+  }
+
+  const handbooks = [];
+
+  for (const entry of entries) {
+    if (!entry.isDirectory()) {
+      continue;
+    }
+
+    const rootDir = path.join(handbooksRoot, entry.name);
+    const configPath = path.join(rootDir, "handbook.config.json");
+
+    try {
+      const rawConfig = JSON.parse(await fs.readFile(configPath, "utf8"));
+      handbooks.push({
+        configPath,
+        rootDir,
+        slug: entry.name,
+        title: rawConfig.title || entry.name
+      });
+    } catch (error) {
+      if (error && error.code === "ENOENT") {
+        continue;
+      }
+
+      throw new Error(`Failed to read handbook config: ${configPath}\n${error.message}`);
+    }
+  }
+
+  if (!handbooks.length) {
+    throw new Error(
+      `No handbooks found under ${handbooksRoot}. Expected docs/handbooks/<slug>/handbook.config.json.`
+    );
+  }
+
+  return handbooks.sort((left, right) => left.slug.localeCompare(right.slug, "zh-CN"));
+}
+
+function getDefaultOutputPath(slug, extension) {
+  return path.join(projectRoot, "dist", slug, `${slug}-handbook.${extension}`);
+}
+
+async function readHandbookConfig(definition) {
+  const configDir = path.dirname(definition.configPath);
+  const config = JSON.parse(await fs.readFile(definition.configPath, "utf8"));
   const sections = Array.isArray(config.sections) ? config.sections : [];
 
   if (!sections.length) {
-    throw new Error(`No handbook sections configured in ${handbookConfigPath}.`);
+    throw new Error(`No handbook sections configured in ${definition.configPath}.`);
   }
 
   return {
-    title: config.title || "OpenClaw 手册",
-    language: config.language || "zh-CN",
-    cssPath: resolveFromConfig(configDir, config.stylesheet || "./assets/handbook.css"),
+    configPath: definition.configPath,
+    coverAlt: config.coverAlt || `${config.title || definition.slug} cover`,
     coverImagePath: resolveFromConfig(configDir, config.coverImage || "./assets/cover.png"),
-    outputHtmlPath: resolveFromConfig(
-      configDir,
-      config.output?.html || "../../dist/openclaw-handbook.html"
-    ),
-    outputPdfPath: resolveFromConfig(
-      configDir,
-      config.output?.pdf || "../../dist/openclaw-handbook.pdf"
-    ),
+    cssPath: resolveFromConfig(configDir, config.stylesheet || "./assets/handbook.css"),
+    language: config.language || "zh-CN",
+    outputHtmlPath: config.output?.html
+      ? resolveFromConfig(configDir, config.output.html)
+      : getDefaultOutputPath(definition.slug, "html"),
+    outputPdfPath: config.output?.pdf
+      ? resolveFromConfig(configDir, config.output.pdf)
+      : getDefaultOutputPath(definition.slug, "pdf"),
+    rootDir: definition.rootDir,
     sections: sections.map((section, index) => {
       if (!section.file) {
         throw new Error(`Section at index ${index} is missing a file path.`);
@@ -104,7 +235,9 @@ async function readHandbookConfig() {
         ...section,
         filePath: resolveFromConfig(configDir, section.file)
       };
-    })
+    }),
+    slug: definition.slug,
+    title: config.title || definition.title || definition.slug
   };
 }
 
@@ -152,7 +285,7 @@ function buildSection(doc, index) {
   `;
 }
 
-function buildHtml({ css, docs, title, language, coverImagePath }) {
+function buildHtml({ css, docs, title, language, coverAlt, coverImagePath }) {
   const bookTitle = title || cleanBookTitle(docs[0]?.title) || "OpenClaw Handbook";
   const coverImageHref = pathToFileURL(coverImagePath).href;
   const renderedSections = docs.map((doc, index) => buildSection(doc, index)).join("\n");
@@ -170,7 +303,7 @@ function buildHtml({ css, docs, title, language, coverImagePath }) {
       <div class="page-card">
         <main class="book">
           <section class="cover" aria-label="cover">
-            <img class="cover__image" src="${coverImageHref}" alt="OpenClaw cover" />
+            <img class="cover__image" src="${coverImageHref}" alt="${escapeHtml(coverAlt)}" />
           </section>
 
           ${renderedSections}
@@ -251,8 +384,54 @@ async function writePdf(htmlPath, pdfPath) {
   }
 }
 
-async function main() {
-  const config = await readHandbookConfig();
+function formatHandbookList(handbooks) {
+  return handbooks
+    .map((definition) => {
+      const relativeConfigPath = path.relative(projectRoot, definition.configPath) || definition.configPath;
+      return `- ${definition.slug}: ${definition.title} (${relativeConfigPath})`;
+    })
+    .join("\n");
+}
+
+function printUsage() {
+  console.log(`Usage:
+  node scripts/render-handbook.mjs [--handbook <slug>] [--all] [--list] [--html-only|--pdf-only]
+
+Examples:
+  npm run build:handbook
+  npm run build:handbook -- --handbook openclaw
+  npm run build:handbook:all
+  npm run handbook:list`);
+}
+
+function selectHandbooks(handbooks, options) {
+  if (options.buildAll) {
+    return handbooks;
+  }
+
+  if (options.handbookSlug) {
+    const selected = handbooks.find((definition) => definition.slug === options.handbookSlug);
+
+    if (!selected) {
+      throw new Error(
+        `Unknown handbook slug "${options.handbookSlug}". Available handbooks:\n${formatHandbookList(handbooks)}`
+      );
+    }
+
+    return [selected];
+  }
+
+  if (handbooks.length === 1) {
+    return handbooks;
+  }
+
+  throw new Error(
+    `Multiple handbooks found. Use --handbook <slug> or --all.\n${formatHandbookList(handbooks)}`
+  );
+}
+
+async function buildHandbook(definition, options) {
+  const config = await readHandbookConfig(definition);
   await ensureCoverImage(config.coverImagePath);
   const docs = await readBookFiles(config);
   const css = await fs.readFile(config.cssPath, "utf8");
@@ -261,21 +440,46 @@ async function main() {
     docs,
     title: config.title,
     language: config.language,
+    coverAlt: config.coverAlt,
     coverImagePath: config.coverImagePath
   });
 
-  let htmlPath = config.outputHtmlPath;
+  const htmlPath = await writeHtml(html, config.outputHtmlPath);
 
-  if (!pdfOnly) {
-    htmlPath = await writeHtml(html, config.outputHtmlPath);
-    console.log(`HTML written to ${htmlPath}`);
-  } else {
-    htmlPath = await writeHtml(html, config.outputHtmlPath);
+  if (!options.pdfOnly) {
+    console.log(`[${config.slug}] HTML written to ${htmlPath}`);
   }
 
-  if (!htmlOnly) {
+  if (!options.htmlOnly) {
     const pdfPath = await writePdf(htmlPath, config.outputPdfPath);
-    console.log(`PDF written to ${pdfPath}`);
+    console.log(`[${config.slug}] PDF written to ${pdfPath}`);
+  }
+}
+
+async function main() {
+  const options = parseArgs(process.argv.slice(2));
+  const handbooks = await discoverHandbooks();
+
+  if (options.help) {
+    printUsage();
+    console.log(`\nAvailable handbooks:\n${formatHandbookList(handbooks)}`);
+    return;
+  }
+
+  if (options.listOnly) {
+    console.log(formatHandbookList(handbooks));
+    return;
+  }
+
+  const selectedHandbooks = selectHandbooks(handbooks, options);
+
+  for (const definition of selectedHandbooks) {
+    await buildHandbook(definition, options);
+  }
+
+  if (selectedHandbooks.length > 1) {
+    const mode = options.htmlOnly ? "HTML" : options.pdfOnly ? "PDF" : "HTML and PDF";
+    console.log(`Built ${mode} for ${selectedHandbooks.length} handbooks.`);
   }
 }
 

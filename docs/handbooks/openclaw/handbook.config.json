@@ -1,0 +1,45 @@
+{
+    "title":  "OpenClaw 手册",
+    "language":  "zh-CN",
+    "coverImage":  "./assets/cover.png",
+    "stylesheet":  "./assets/handbook.css",
+    "sections":  [
+                     {
+                         "id":  "chapter-08",
+                         "file":  "./chapters/08-作者介绍.md"
+                     },
+                     {
+                         "id":  "toc",
+                         "type":  "toc",
+                         "file":  "./chapters/00-目录.md"
+                     },
+                     {
+                         "id":  "chapter-01",
+                         "file":  "./chapters/01-初识全能小虾.md"
+                     },
+                     {
+                         "id":  "chapter-02",
+                         "file":  "./chapters/02-领养准备.md"
+                     },
+                     {
+                         "id":  "chapter-03",
+                         "file":  "./chapters/03-全线连通.md"
+                     },
+                     {
+                         "id":  "chapter-04",
+                         "file":  "./chapters/04-驯虾手册.md"
+                     },
+                     {
+                         "id":  "chapter-05",
+                         "file":  "./chapters/05-冲浪实战.md"
+                     },
+                     {
+                         "id":  "chapter-06",
+                         "file":  "./chapters/06-安全防护与急救.md"
+                     },
+                     {
+                         "id":  "chapter-07",
+                         "file":  "./chapters/07-附录与寄语.md"
+                     }
+                 ]
+}

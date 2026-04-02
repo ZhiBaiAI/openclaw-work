@@ -1,18 +1,21 @@
-# OpenClaw Handbook Export
+# Handbook Workspace
 
-这是一个用于维护和导出 OpenClaw 手册的项目。
+这是一个用于维护和导出多个 Markdown 手册的工作区。
 
-项目内容以 Markdown 章节为源文件，通过 Node.js 脚本渲染为整本 HTML，并可继续导出为 PDF。
+每本手册都放在独立目录下，通过同一套 Node.js 脚本渲染为 HTML，并可继续导出为 PDF。当前仓库内已内置 `openclaw` 作为第一本示例手册，后续可以继续新增更多手册而不需要再改脚本。
 
 ## 目录结构
 
 ```text
-openclaw-work/
+openclaw-book/
 ├─ docs/
-│  ├─ handbook/
-│  │  ├─ assets/
-│  │  ├─ chapters/
-│  │  └─ handbook.config.json
+│  ├─ handbooks/
+│  │  ├─ README.md
+│  │  └─ openclaw/
+│  │     ├─ assets/
+│  │     ├─ chapters/
+│  │     ├─ handbook.config.json
+│  │     └─ 修改与转PDF说明.md
 │  └─ references/
 │     └─ pdfs/            # 本地参考资料，已加入 .gitignore，不推送
 ├─ scripts/
@@ -38,16 +41,40 @@ openclaw-work/
 npm install
 ```
 
+查看当前已注册的手册：
+
+```powershell
+npm run handbook:list
+```
+
 导出 HTML 和 PDF：
 
 ```powershell
 npm run build:handbook
 ```
 
+如果仓库里有多本手册，指定某一本：
+
+```powershell
+npm run build:handbook -- --handbook openclaw
+```
+
+批量导出全部手册：
+
+```powershell
+npm run build:handbook:all
+```
+
 只导出 HTML：
 
 ```powershell
 npm run build:handbook:html
+```
+
+多手册场景下只导出某一本 HTML：
+
+```powershell
+npm run build:handbook:html -- --handbook openclaw
 ```
 
 只导出 PDF：
@@ -60,6 +87,7 @@ npm run build:handbook:pdf
 
 ```powershell
 npm run handbook
+npm run handbook:all
 npm run handbook:html
 npm run handbook:pdf
 ```
@@ -80,14 +108,25 @@ python scripts/pdf_to_md.py docs/references/pdfs/*.pdf -o dist/converted-md
 
 ## 内容维护
 
-- 正文内容位于 `docs/handbook/chapters/`
-- 章节顺序由 `docs/handbook/handbook.config.json` 控制
-- 封面图位于 `docs/handbook/assets/cover.png`
-- 导出样式位于 `docs/handbook/assets/handbook.css`
+- 每本手册放在 `docs/handbooks/<slug>/`
+- 正文内容位于 `docs/handbooks/<slug>/chapters/`
+- 章节顺序由 `docs/handbooks/<slug>/handbook.config.json` 控制
+- 封面图位于 `docs/handbooks/<slug>/assets/cover.png`
+- 导出样式位于 `docs/handbooks/<slug>/assets/handbook.css`
+- 如果当前只有一本手册，`npm run build:handbook` 会直接构建它；如果后续存在多本手册，请显式传入 `--handbook <slug>` 或使用 `build:handbook:all`
+
+新增一本手册时，直接复制一个现有目录即可，例如：
+
+```text
+docs/handbooks/new-book/
+├─ assets/
+├─ chapters/
+└─ handbook.config.json
+```
 
 ## 输出文件
 
-默认输出到：
+默认输出到 `dist/<slug>/`：
 
-- `dist/openclaw-handbook.html`
-- `dist/openclaw-handbook.pdf`
+- `dist/openclaw/openclaw-handbook.html`
+- `dist/openclaw/openclaw-handbook.pdf`
