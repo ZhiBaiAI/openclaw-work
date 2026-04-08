@@ -1,0 +1,58 @@
+{
+  "title": "财务人如何用AI少加点班",
+  "language": "zh-CN",
+  "coverAlt": "财务人如何用AI少加点班",
+  "coverImage": "./assets/cover.png",
+  "stylesheet": "./assets/handbook.css",
+  "sections": [
+    {
+      "id": "author",
+      "file": "./chapters/作者介绍.md"
+    },
+    {
+      "id": "toc",
+      "type": "toc",
+      "file": "./chapters/00-目录.md"
+    },
+    {
+      "id": "chapter-01",
+      "file": "./chapters/chapter_01.md"
+    },
+    {
+      "id": "chapter-02",
+      "file": "./chapters/chapter_02.md"
+    },
+    {
+      "id": "chapter-03",
+      "file": "./chapters/chapter_03.md"
+    },
+    {
+      "id": "chapter-04",
+      "file": "./chapters/chapter_04.md"
+    },
+    {
+      "id": "chapter-05",
+      "file": "./chapters/chapter_05.md"
+    },
+    {
+      "id": "chapter-06",
+      "file": "./chapters/chapter_06.md"
+    },
+    {
+      "id": "chapter-07",
+      "file": "./chapters/chapter_07.md"
+    },
+    {
+      "id": "chapter-08",
+      "file": "./chapters/chapter_08.md"
+    },
+    {
+      "id": "chapter-09",
+      "file": "./chapters/chapter_09.md"
+    },
+    {
+      "id": "chapter-10",
+      "file": "./chapters/chapter_10.md"
+    }
+  ]
+}
